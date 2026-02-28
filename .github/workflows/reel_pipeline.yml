@@ -1,0 +1,34 @@
+name: Nighttime Reel Pipeline
+
+on:
+  schedule:
+    # 10:00 PM IST is 4:30 PM UTC
+    - cron: '30 16 * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  run-reel:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install System Dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick
+
+      - name: Install Python Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Post Nighttime Reel
+        env:
+          INSTAGRAM_ACCOUNT_ID: ${{ secrets.INSTAGRAM_ACCOUNT_ID }}
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: python run_daily.py --now --reel
