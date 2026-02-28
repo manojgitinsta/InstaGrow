@@ -286,6 +286,13 @@ def _print_summary(results):
         status = "  Success" if success else "  Issues"
         print(f"  {key.upper()}: {status}")
     print("=" * 60)
+    
+    # Automatically send success/failure report to WhatsApp
+    try:
+        from engine.whatsapp_notifier import send_whatsapp_report
+        send_whatsapp_report(results)
+    except Exception as e:
+        print(f"  ⚠️ Could not trigger WhatsApp report: {e}")
 
 
 if __name__ == "__main__":
