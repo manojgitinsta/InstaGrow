@@ -232,8 +232,8 @@ def create_text_overlay(text, font, y_center, duration, glow=True, color=(255, 2
 
         if glow:
             # 1. Dark Drop Shadow (improves contrast against bright backgrounds)
-            shadow_color = (0, 0, 0, 180)
-            shadow_offset = 3
+            shadow_color = (0, 0, 0, 255)
+            shadow_offset = 5
             draw.text((x + shadow_offset, y + shadow_offset), line, font=font, fill=shadow_color)
             
             # 2. Soft glow: draw text slightly larger in semi-transparent white, then blur
@@ -249,7 +249,7 @@ def create_text_overlay(text, font, y_center, duration, glow=True, color=(255, 2
             draw = ImageDraw.Draw(canvas)  # Refresh draw object
 
         # Main text with slight stroke for crispness
-        draw.text((x, y), line, font=font, fill=color + (255,), stroke_width=1, stroke_fill=(0,0,0,100))
+        draw.text((x, y), line, font=font, fill=color + (255,), stroke_width=2, stroke_fill=(0,0,0,150))
 
     clip = _create_image_clip(canvas, duration)
     return clip, total_height
@@ -317,7 +317,7 @@ def create_cta_overlay(duration, appear_at):
     return clip
 
 
-def create_dim_overlay(duration, opacity=160):
+def create_dim_overlay(duration, opacity=180):
     """Semi-transparent black overlay for text readability."""
     dim = Image.new('RGBA', (REEL_WIDTH, REEL_HEIGHT), (0, 0, 0, opacity))
     return _create_image_clip(dim, duration)
@@ -426,8 +426,8 @@ def create_cinematic_reel(
     # ── 3. Create Visual Effects Layers ─────────────────────────────────────
     print("\n✨ Building cinematic layers...")
 
-    # Dim overlay for readability
-    dim_layer = create_dim_overlay(duration, opacity=140)
+    # Dim overlay for readability (darker to pop text)
+    dim_layer = create_dim_overlay(duration, opacity=170)
 
     # Heavy vignette
     print("   🔲 Creating vignette...")
@@ -438,8 +438,8 @@ def create_cinematic_reel(
 
     # Output of create_text_overlay modified to return (clip, total_height)
     
-    font_hook = _find_font(FONT_CANDIDATES_TYPEWRITER, 54)
-    font_reflect = _find_font(FONT_CANDIDATES_TYPEWRITER, 54)
+    font_hook = _find_font(FONT_CANDIDATES_TYPEWRITER, 95)
+    font_reflect = _find_font(FONT_CANDIDATES_TYPEWRITER, 85)
 
     # Hook line: appears at 0.2s, fast fade-in over 0.3s to hook viewer instantly
     hook_appear_at = 0.2

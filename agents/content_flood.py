@@ -113,11 +113,10 @@ def generate_flood_content():
         text = post['caption'] if pd.notna(post['caption']) else "Stay motivated!"
         output_name = os.path.join(output_dir, f"reel_row{index}_v1.mp4")
 
+        # We force overwrite so it doesn't accidentally upload an old cached video file
         if os.path.exists(output_name):
-            print(f"\n⏩ Row {index} already exists, skipping.")
-            df.at[index, 'status'] = 'flood_ready'
-            df.to_csv(calendar_path, index=False)
-            continue
+            print(f"\n🗑️ Overwriting old cached video for Row {index}.")
+            os.remove(output_name)
 
         print(f"\n{'─' * 50}")
         print(f"🎬 Row {index}: {text[:60]}...")
