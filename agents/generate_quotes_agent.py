@@ -87,6 +87,8 @@ def append_to_calendar(quotes_data):
     
     calendar_file = os.path.join(os.path.dirname(__file__), "..", "data", "content_calendar.csv")
     
+    os.makedirs(os.path.dirname(calendar_file), exist_ok=True)
+    
     try:
         df = pd.read_csv(calendar_file)
         # Find the last scheduled date

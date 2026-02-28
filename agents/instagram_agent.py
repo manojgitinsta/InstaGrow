@@ -121,6 +121,7 @@ def run_agent():
     
     # Path to data
     calendar_path = os.path.join(os.path.dirname(__file__), "..", "data", "content_calendar.csv")
+    os.makedirs(os.path.dirname(calendar_path), exist_ok=True)
     
     try:
         df = pd.read_csv(calendar_path)

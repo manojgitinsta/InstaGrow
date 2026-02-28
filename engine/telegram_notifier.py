@@ -1,6 +1,11 @@
 import os
+import sys
 import requests
 from dotenv import load_dotenv
+
+# Ensure Windows console handles emojis
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 
 load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
@@ -58,4 +63,5 @@ def send_telegram_report(results_dict):
 if __name__ == "__main__":
     test_data = {"Morning Story": True, "Afternoon Carousel": False}
     print("Sending test report...")
-    send_telegram_report(test_data)
+    if not send_telegram_report(test_data):
+        print("   ❌ Test failed. Please check your TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID in .env")
