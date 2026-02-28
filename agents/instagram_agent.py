@@ -173,27 +173,31 @@ def run_agent():
                         )
                         if result and 'id' in result:
                             print(f"   ✅ Reel posted! Media ID: {result['id']}")
+                            
+                            # Mark as fully published
+                            df.at[index, 'status'] = 'published_variants'
+                            df.to_csv(calendar_path, index=False)
+                            print("✅ Finished dispatching flood batch.")
+                            return True
                         else:
                             print(f"   ⚠️ Reel posting result: {result}")
+                            return False
                     else:
                         print("   ❌ Failed to upload video. Reel saved locally for manual upload.")
+                        return False
                 else:
                     print("   ⚠️ Missing Instagram credentials in .env")
+                    return False
             else:
-                print(f"   ⚠️ Variant {variant} video not found.")
-                
-        # Mark as fully published
-        df.at[index, 'status'] = 'published_variants'
-        df.to_csv(calendar_path, index=False)
-        print("✅ Finished dispatching flood batch.")
-        return
+                print(f"   ⚠️ Variant {variant} video not found. Aborting IG upload.")
+                return False
 
     # Fallback to normal pending check
     pending_posts = df[df['status'] == 'pending']
     
     if pending_posts.empty:
         print("No pending posts found.")
-        return
+        return False
 
     post = pending_posts.iloc[0]
     index = pending_posts.index[0]
@@ -209,6 +213,7 @@ def run_agent():
 
     df.to_csv(calendar_path, index=False)
     print("Updated calendar status.")
+    return True
 
 if __name__ == "__main__":
     run_agent()

@@ -155,9 +155,13 @@ def run_reel(dry_run=False):
         # Step 3: Post to Instagram
         from agents.instagram_agent import run_agent
         print("\n  Posting reel to Instagram...")
-        run_agent()
+        post_success = run_agent()
+        
+        if not post_success:
+            print("  ❌ Reel phase aborted due to failure.")
+            return False
 
-        print("  Reel phase complete!")
+        print("  ✅ Reel phase complete!")
         return True
 
     except Exception as e:

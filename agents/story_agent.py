@@ -114,8 +114,14 @@ def run_story_agent(dry_run=True, mock_url="https://images.pexels.com/photos/148
         return False
         
     container_id = upload_story_container(public_url)
-    if container_id:
-        publish_story_container(container_id)
+    if not container_id:
+        print("   [ERROR] Failed to create story container. Aborting.")
+        return False
+        
+    publish_success = publish_story_container(container_id)
+    if not publish_success:
+        print("   [ERROR] Failed to publish story. Aborting.")
+        return False
         
     print("=" * 60)
     return True
