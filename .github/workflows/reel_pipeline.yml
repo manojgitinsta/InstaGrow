@@ -20,7 +20,7 @@ jobs:
           cache: 'pip'
 
       - name: Install System Dependencies
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg imagemagick fonts-liberation
 
       - name: Install Python Dependencies
         run: pip install -r requirements.txt

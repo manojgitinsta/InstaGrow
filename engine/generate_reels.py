@@ -19,6 +19,7 @@ from moviepy import (
     concatenate_videoclips, TextClip, ImageClip, concatenate_audioclips,
 )
 import moviepy.video.fx as vfx
+import moviepy.audio.fx as afx
 import sys
 import os
 import traceback
@@ -53,6 +54,7 @@ FONT_CANDIDATES_TYPEWRITER = [
     os.path.join(ASSETS_DIR, "fonts", "courier.ttf"),
     "C:\\Windows\\Fonts\\cour.ttf",
     "C:\\Windows\\Fonts\\consola.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf", # GitHub Actions Ubuntu
     "cour.ttf",
     "georgia.ttf",
 ]
@@ -60,6 +62,7 @@ FONT_CANDIDATES_SANS = [
     os.path.join(ASSETS_DIR, "fonts", "arial.ttf"),
     "C:\\Windows\\Fonts\\calibril.ttf",
     "C:\\Windows\\Fonts\\arial.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", # GitHub Actions Ubuntu
     "arial.ttf",
 ]
 
@@ -517,7 +520,7 @@ def create_cinematic_reel(
                 audio = audio.subclipped(0, duration)
 
             # Volume ducking: 30% so music doesn't overpower text
-            audio = audio.with_effects([vfx.MultiplyVolume(0.3)])
+            audio = audio.with_effects([afx.MultiplyVolume(0.3)])
 
             video = video.with_audio(audio)
             print("   ✅ Audio mixed at 30% volume")

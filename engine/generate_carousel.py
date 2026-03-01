@@ -50,6 +50,7 @@ FONT_CANDIDATES_TYPEWRITER = [
     "C:\\Windows\\Fonts\\cour.ttf",       # Courier New
     "C:\\Windows\\Fonts\\consola.ttf",    # Consolas
     "C:\\Windows\\Fonts\\lucon.ttf",      # Lucida Console
+    "/usr/share/fonts/truetype/liberation/LiberationMono-Regular.ttf", # GitHub Actions Ubuntu
     "cour.ttf",
 ]
 
@@ -57,6 +58,7 @@ FONT_CANDIDATES_SANS = [
     os.path.join(ASSETS_DIR, "fonts", "arial.ttf"),
     "C:\\Windows\\Fonts\\calibril.ttf",
     "C:\\Windows\\Fonts\\arial.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf", # GitHub Actions Ubuntu
     "arial.ttf",
 ]
 
