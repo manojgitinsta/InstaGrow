@@ -353,29 +353,48 @@ def generate_carousel_content():
     except ImportError:
         from gemini_keys import generate_with_rotation
 
-    prompt = """You are a premium Instagram content strategist for @_the_positive_quote.
-Generate content for a 3-slide dark cinematic motivational carousel post.
+    import random
+
+    # Theme injector — picks 2 random themes per call for variety
+    theme_pool = [
+        "heartbreak & letting go",
+        "silent strength & inner battles",
+        "betrayal & trust shattered",
+        "solitude & rebuilding from nothing",
+        "self-worth discovered too late",
+        "toxic love & walking away",
+        "the weight of unspoken words",
+        "outgrowing people you once needed",
+        "forgiveness without closure",
+        "the loneliness of being misunderstood",
+    ]
+    selected_themes = random.sample(theme_pool, 2)
+    themes_str = " and ".join(selected_themes)
+
+    prompt = f"""You are the ghostwriter behind @_the_positive_quote — an Instagram page known for dark, cinematic, deeply emotional content.
+
+Generate content for a 3-slide carousel post. Today's themes: {themes_str}.
 
 Return ONLY raw JSON (no markdown blocks). The JSON must have this exact structure:
-{
+{{
   "slides": [
-    {
+    {{
       "slide_number": 1,
       "theme": "motivation",
       "quote_line_1": "First line of quote",
       "quote_line_2": "Second line of quote",
       "highlight_word": "ONE key word to highlight in golden",
-      "pexels_query": "dark cinematic search query for background (3-4 words)"
-    },
-    {
+      "pexels_query": "dark cinematic search query for background (3-5 words)"
+    }},
+    {{
       "slide_number": 2,
       "theme": "healing",
       "quote_line_1": "...",
       "quote_line_2": "...",
       "highlight_word": "...",
       "pexels_query": "..."
-    },
-    {
+    }},
+    {{
       "slide_number": 3,
       "theme": "cta",
       "quote_line_1": "Dynamic short emotional hook (varying each time)",
@@ -384,22 +403,33 @@ Return ONLY raw JSON (no markdown blocks). The JSON must have this exact structu
       "cta_line_2": "Dynamic emotional CTA (e.g., Share with a quiet soul)",
       "highlight_word": "light",
       "pexels_query": "..."
-    }
+    }}
   ],
   "caption": "Full Instagram caption here with hook, emotional paragraph, CTA, question, and save/share encouragement",
   "hashtags": ["tag1", "tag2", "tag3", "tag4", "tag5", "tag6", "tag7", "tag8", "tag9", "tag10", "tag11", "tag12", "tag13", "tag14", "tag15"]
-}
+}}
+
+QUOTE QUALITY — every quote must hit THIS hard:
+- "Some apologies never come. You just learn to stop waiting."
+- "I didn't lose you. I lost the version of me that needed you."
+- "You were my 3am thought. I wasn't even your afternoon."
+- "The saddest people smile the brightest. That's why nobody noticed."
+- "Some chapters end mid-sentence. That's the cruelest kind of ending."
+
+BANNED (instant failure):
+- "keep going", "stay strong", "believe in yourself", "you matter", "don't give up"
+- "rise above", "be positive", "everything happens for a reason", "good vibes"
+- Generic platitudes or advice. Write about SPECIFIC MOMENTS, not generic motivation.
 
 RULES:
-- Slide 1 (Motivation): Max 18 words across two lines. Deep, powerful, not aggressive. Pexels query should be dark moody landscape (e.g. "dark sunset silhouette road")
-- Slide 2 (Healing): Two lines max. Calm, reflective. Pexels query: nature close-ups (e.g. "butterfly dark golden light", "rain window blur", "moon reflection water")
-- Slide 3 (CTA): Write a completely custom, dynamic short emotional hook (`quote_line_1` and `quote_line_2`) that changes entirely every time. Do NOT reuse "This world is heavy". Must include "Follow @_the_positive_quote" as `cta_line_1`. For the secondary CTA (`cta_line_2`), write exactly ONE highly emotional but COMMANDING phrase (3-to-5 words) that actively forces the viewer to do ONE of these actions: Save, Share, or Follow. Do not just ask nicely—tell them what to do. (e.g., "Save this before you forget", "Share this to help them", "Follow us to stay strong"). Randomly rotate the focused action. Pexels query: hopeful dark (e.g. "sunrise dark clouds", "candle flame dark")
-- Highlight ONE powerful word per slide in golden
-- Caption: Strong hook first 2 lines, emotional paragraph, engaging question, and ONE emotional dynamic CTA (randomly focusing on only Save, Share, Like, or Follow). Make it deeply emotional and organic.
+- Slide 1 (Motivation): Max 18 words across two lines. Deep, gut-punch, NOT aggressive. Pexels query: dark moody landscape (e.g. "dark sunset silhouette road", "cinematic foggy bridge morning")
+- Slide 2 (Healing): Two lines max. Calm, reflective, like a whispered truth. Pexels query: nature close-ups (e.g. "rain window blur dark", "moonlit lake reflection", "autumn leaves golden light")
+- Slide 3 (CTA): Write a completely custom, dynamic emotional hook that changes every time. Must include "Follow @_the_positive_quote" as `cta_line_1`. For `cta_line_2`, write ONE commanding phrase (3-5 words) that forces action: Save, Share, or Follow. Rotate the action randomly.
+- Highlight ONE visceral word per slide in golden
+- Caption: Emotional first 2 lines that stop the scroll, philosophical paragraph, engaging question, ONE dynamic CTA. Tone: raw, cinematic, deeply personal.
 - Exactly 15 hashtags: 5 high volume (#motivation #quotes #viral #mindset #explore), 5 medium (#deepthoughts #innergrowth #healingjourney #lifequotes #positivevibes), 5 niche (#darkcinematic #cinematicquotes #motivationaldarkquotes #thepositivequote #quotestoliveby)
-- Do NOT use any banned or spam hashtags.
-- All quotes must be original, deep, mature, emotionally powerful.
-- Tone: Premium, cinematic, deeply human.
+- All quotes must feel like "someone wrote this about MY exact situation."
+- Tone: Premium, cinematic, deeply human. No generic Instagram motivation.
 """
 
     print("[AI] Generating carousel content via Gemini (with key rotation)...")

@@ -39,7 +39,10 @@ def fetch_pexels_video(keyword="motivation", output_path="temp_bg_video.mp4", us
     # 2. Pexels API Mode
     print(f"[PEXELS] Searching Pexels for vertical video: {keyword}...")
     headers = {"Authorization": PEXELS_API_KEY}
-    url = f"https://api.pexels.com/videos/search?query={keyword}&orientation=portrait&per_page=15"
+    
+    # Randomize page offset (1-5) for variety across runs
+    random_page = random.randint(1, 5)
+    url = f"https://api.pexels.com/videos/search?query={keyword}&orientation=portrait&per_page=40&page={random_page}"
     
     try:
         print(f"[API] Query: {url}")
@@ -48,18 +51,27 @@ def fetch_pexels_video(keyword="motivation", output_path="temp_bg_video.mp4", us
         data = response.json()
         
         if not data.get("videos"):
-            print(f"[WARN] No videos found on Pexels for query: '{keyword}'. Trying fallback...")
-            if keyword != "cinematic nature":
-                return fetch_pexels_video("cinematic nature", output_path, use_local=use_local, result_index=result_index)
-            return False
+            # If random page had no results, try page 1
+            if random_page != 1:
+                print(f"[WARN] Page {random_page} empty, trying page 1...")
+                url = f"https://api.pexels.com/videos/search?query={keyword}&orientation=portrait&per_page=40&page=1"
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+            
+            if not data.get("videos"):
+                print(f"[WARN] No videos found on Pexels for query: '{keyword}'. Trying fallback...")
+                if keyword != "cinematic nature":
+                    return fetch_pexels_video("cinematic nature", output_path, use_local=use_local, result_index=result_index)
+                return False
         
         total_found = len(data["videos"])
-        print(f"[DONE] Found {total_found} videos.")
+        print(f"[DONE] Found {total_found} videos on page {random_page}.")
         
-        # Pick the requested index, wrap around if out of bounds
-        v_idx = result_index % total_found
+        # RANDOMIZE: pick a random video from the results for maximum variety
+        v_idx = random.randint(0, total_found - 1)
         video_data = data["videos"][v_idx]
-        print(f"[INFO] Using video result index {v_idx} (Requested: {result_index})")
+        print(f"[INFO] Randomly selected video index {v_idx} out of {total_found}")
         
         # Find the best vertical MP4 link
         video_files = video_data.get("video_files", [])

@@ -132,9 +132,9 @@ def run_auto_commenter_phase(dry_run=False):
 
 
 def run_reel(dry_run=False):
-    """Generate and post a reel."""
+    """Generate a reel and send to Telegram for manual review (no auto-posting)."""
     print("\n" + "=" * 60)
-    print("  PHASE 2: REEL GENERATION + POST")
+    print("  PHASE 2: REEL GENERATION + TELEGRAM DELIVERY")
     print("=" * 60)
 
     try:
@@ -149,20 +149,55 @@ def run_reel(dry_run=False):
         generate_flood_content()
 
         if dry_run:
-            print("\n  DRY RUN — Skipping reel posting.")
+            print("\n  DRY RUN — Skipping Telegram delivery.")
             return True
 
-        # Step 3: Post to Instagram
-        from agents.instagram_agent import run_agent
-        print("\n  Posting reel to Instagram...")
-        post_success = run_agent()
-        
-        if not post_success:
-            print("  ❌ Reel phase aborted due to failure.")
+        # Step 3: Find the generated reel and send via Telegram
+        import pandas as pd
+        calendar_path = os.path.join(os.path.dirname(__file__), "data", "content_calendar.csv")
+        try:
+            df = pd.read_csv(calendar_path)
+        except FileNotFoundError:
+            print("  ❌ No content calendar found.")
             return False
 
-        print("  ✅ Reel phase complete!")
-        return True
+        # Find the most recent flood_ready reel
+        ready_reels = df[df['status'] == 'flood_ready']
+        if ready_reels.empty:
+            print("  ❌ No flood_ready reels found.")
+            return False
+
+        latest_index = ready_reels.index[-1]
+        output_dir = os.path.join(os.path.dirname(__file__), "output")
+        video_path = os.path.join(output_dir, f"reel_row{latest_index}_v1.mp4")
+
+        if not os.path.exists(video_path):
+            print(f"  ❌ Reel video not found: {video_path}")
+            return False
+
+        # Generate SEO caption for Telegram message
+        raw_caption = df.at[latest_index, 'caption'] if pd.notna(df.at[latest_index, 'caption']) else ""
+        try:
+            from engine.seo_caption import generate_reel_caption
+            caption = generate_reel_caption(raw_caption, theme="motivation")
+            print("  ✅ SEO caption generated")
+        except Exception as e:
+            print(f"  [WARN] SEO caption failed ({e}), using raw quote")
+            caption = raw_caption
+
+        # Send reel + caption to Telegram
+        from engine.telegram_notifier import send_telegram_video
+        print("\n  📤 Sending reel to Telegram for review...")
+        tg_success = send_telegram_video(video_path, caption)
+
+        if tg_success:
+            df.at[latest_index, 'status'] = 'sent_to_telegram'
+            df.to_csv(calendar_path, index=False)
+            print("  ✅ Reel sent to Telegram! Review and upload manually.")
+            return True
+        else:
+            print("  ⚠️ Telegram delivery failed. Reel saved locally.")
+            return False
 
     except Exception as e:
         print(f"  Reel phase failed: {e}")

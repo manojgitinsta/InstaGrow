@@ -59,13 +59,13 @@ def wrap_text(text, font, max_width, draw):
         lines.append(line.strip())
     return lines
 
-def create_news_story_image(headline, summary, output_path):
+def create_news_story_image(headline, summary, output_path, link=None):
     """Generates the 9:16 Instagram Story image."""
     
     bg_url = get_soothing_background()
     if not bg_url:
         return False
-        
+    
     bg_path = os.path.join(os.path.dirname(__file__), "..", "data", "temp_story_bg.jpg")
     os.makedirs(os.path.dirname(bg_path), exist_ok=True)
     
@@ -122,6 +122,7 @@ def create_news_story_image(headline, summary, output_path):
     font_label = _find_font(FONT_CANDIDATES_TYPEWRITER, 55)
     font_headline = _find_font(FONT_CANDIDATES_TYPEWRITER, 95)
     font_summary = _find_font(FONT_CANDIDATES_TYPEWRITER, 70)
+    font_link = _find_font(FONT_CANDIDATES_SANS, 35)
     font_watermark = _find_font(FONT_CANDIDATES_SANS, 45)
 
     margin = 80
@@ -163,6 +164,55 @@ def create_news_story_image(headline, summary, output_path):
         line_w = draw.textlength(line, font=font_summary)
         img = draw_text_with_glow(img, ((STORY_WIDTH - line_w) / 2, current_y), line, font=font_summary, fill=(230, 230, 230, 255), glow_fill=(255, 255, 255, 40))
         current_y += 85
+
+    # 6b. Draw Source Link Sticker
+    if link:
+        from urllib.parse import urlparse
+        domain = urlparse(link).netloc.replace("www.", "")
+        
+        # 1. Main Link Sticker (Pill Shape)
+        link_text = domain.upper()
+        link_w = draw.textlength(link_text, font=font_link)
+        link_h = 60 # Approx height for the pill
+        
+        padding_x = 40
+        padding_y = 20
+        rect_w = link_w + (padding_x * 2)
+        rect_h = link_h + (padding_y * 2)
+        
+        sticker_x = (STORY_WIDTH - rect_w) / 2
+        sticker_y = STORY_HEIGHT - 350
+        
+        # Draw the pill background
+        draw.rounded_rectangle(
+            [sticker_x, sticker_y, sticker_x + rect_w, sticker_y + rect_h],
+            radius=40,
+            fill=(255, 255, 255, 40), # Glassmorphic white
+            outline=(255, 255, 255, 80),
+            width=2
+        )
+        
+        # Draw the domain text inside the pill
+        draw.text(
+            (sticker_x + padding_x, sticker_y + padding_y),
+            link_text,
+            font=font_link,
+            fill=(255, 255, 255, 220)
+        )
+        
+        # 2. "LINK IN BIO FOR FULL NEWS" CTA
+        cta_text = "LINK IN BIO FOR FULL NEWS"
+        cta_font = _find_font(FONT_CANDIDATES_SANS, 32)
+        cta_w = draw.textlength(cta_text, font=cta_font)
+        img = draw_text_with_glow(
+            img, 
+            ((STORY_WIDTH - cta_w) / 2, STORY_HEIGHT - 280), # Moved up from relative to sticker
+            cta_text, 
+            font=cta_font, 
+            fill=(255, 204, 0, 230), # Golden to stand out
+            glow_fill=(0, 0, 0, 100),
+            glow_radius=2
+        )
         
     # 7. Add Brand Footer (Watermark)
     footer_text = "@_the_positive_quote"

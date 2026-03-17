@@ -15,6 +15,33 @@ from engine.generate_reels import create_cinematic_reel
 from engine.trending_audio import get_contextual_trending_audio
 
 
+import random as _random
+
+# Diverse fallback scene queries — never the same background twice
+DIVERSE_SCENE_QUERIES = [
+    "cinematic rainy window night",
+    "cinematic lonely street lamp",
+    "cinematic foggy bridge morning",
+    "cinematic dark forest path",
+    "cinematic autumn leaves falling",
+    "cinematic candlelit room shadows",
+    "cinematic empty bench park",
+    "cinematic train window rain",
+    "cinematic misty mountain dawn",
+    "cinematic moonlit ocean waves",
+    "cinematic city rooftop night",
+    "cinematic abandoned hallway light",
+    "cinematic snow falling streetlight",
+    "cinematic sunset silhouette alone",
+    "cinematic coffee shop window rain",
+    "cinematic dark staircase shadows",
+    "cinematic desert road lonely",
+    "cinematic pier fog morning",
+    "cinematic old bookshop candlelight",
+    "cinematic willow tree lake",
+]
+
+
 def _split_quote_with_gemini(quote_text):
     """
     Uses Gemini to split a quote into a short hook line, a reflective followup,
@@ -29,30 +56,48 @@ def _split_quote_with_gemini(quote_text):
         api_key = os.getenv("GEMINI_API_KEY") or "AIzaSyBcVB1p0Md_4YDCWnAZ_17YcgnxI5VcBHw"
         client = genai.Client(api_key=api_key)
 
-        prompt = f"""You are a cinematic reel director. Given this motivational quote, split it into TWO lines and pick a visual scene.
+        # Pick a random scene category to guide Gemini toward variety
+        scene_categories = [
+            "urban loneliness (empty streets, neon reflections, rooftop isolation)",
+            "nature melancholy (foggy forests, misty mountains, rain on leaves)",
+            "indoor solitude (candlelit rooms, empty chairs, window reflections)",
+            "weather moods (thunderstorms, snow falling, fog rolling in)",
+            "travel & movement (train windows, empty roads, abandoned stations)",
+            "water & reflection (moonlit lake, rain puddles, ocean at dusk)",
+        ]
+        suggested_category = _random.choice(scene_categories)
+
+        prompt = f"""You are a cinematic reel director. Given this quote, split it into TWO lines and pick a hyper-engaging visual scene.
 
 QUOTE: "{quote_text}"
 
-Return EXACTLY 3 lines (no labels, no numbering, no extra text):
-Line 1: A short punchy HOOK (max 8 words) that grabs attention
-Line 2: The deeper REFLECTIVE follow-up (the rest of the quote, slightly rephrased if needed)
-Line 3: A 2-3 word cinematic Pexels search query starting with "cinematic" (e.g. "cinematic dark rain")
+Return EXACTLY 3 lines (no labels, no extra text):
+Line 1: An immediate, scroll-stopping HOOK (the first few words that make people stay, max 8 words).
+Line 2: The emotional REFLECTIVE hit (the rest of the quote, max 12 words).
+Line 3: A 3-5 word Pexels search query for the background video. Must start with "cinematic".
 
-RULES:
-- Hook must be SHORT and impactful
-- Reflective line should be the emotional core of the quote
-- Scene query must be DARK, MOODY, CINEMATIC. No humans, no bright colors.
+RULES FOR SCENE QUERY:
+- Today's visual theme: {suggested_category}
+- The background MUST be visually striking, dark, moody, and RELATABLE to a lonely or emotional human experience.
+- NEVER use "cinematic dark ocean" — be more specific and creative.
+- Each scene must feel like a MOVIE FRAME — the kind of shot that makes someone pause mid-scroll.
+- Great examples: "cinematic rainy window night", "cinematic foggy bridge morning", "cinematic lonely street lamp", "cinematic candlelit room shadows", "cinematic train window rain", "cinematic snow falling streetlight", "cinematic empty bench park fog", "cinematic autumn leaves falling wind", "cinematic abandoned hallway light", "cinematic moonlit pier alone"
+- BAD examples (too generic): "cinematic dark ocean", "cinematic motivation", "cinematic nature", "cinematic sunset"
 """
         response = client.models.generate_content(
-            model='gemini-1.5-flash-latest',
+            model='gemini-2.0-flash',
             contents=prompt,
         )
         lines = [l.strip() for l in response.text.strip().split('\n') if l.strip()]
 
         if len(lines) >= 3:
-            return lines[0], lines[1], lines[2]
+            scene = lines[2]
+            # Safety: if Gemini returns the generic fallback, override it
+            if scene.lower() in ("cinematic dark ocean", "cinematic nature", "cinematic motivation"):
+                scene = _random.choice(DIVERSE_SCENE_QUERIES)
+            return lines[0], lines[1], scene
         elif len(lines) == 2:
-            return lines[0], lines[1], "cinematic dark ocean"
+            return lines[0], lines[1], _random.choice(DIVERSE_SCENE_QUERIES)
         else:
             raise ValueError(f"Unexpected response: {lines}")
 
@@ -69,12 +114,12 @@ def _split_quote_heuristic(quote_text):
         if idx > 15:
             hook = quote_text[:idx].strip().rstrip(',.')
             reflective = quote_text[idx + len(sep):].strip()
-            return hook, reflective, "cinematic dark ocean"
+            return hook, reflective, _random.choice(DIVERSE_SCENE_QUERIES)
 
     # If no good split, take first ~6 words as hook
     words = quote_text.split()
     mid = min(6, len(words) // 2)
-    return " ".join(words[:mid]), " ".join(words[mid:]), "cinematic dark ocean"
+    return " ".join(words[:mid]), " ".join(words[mid:]), _random.choice(DIVERSE_SCENE_QUERIES)
 
 
 def generate_flood_content():

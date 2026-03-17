@@ -90,7 +90,12 @@ def run_story_agent(dry_run=True, mock_url="https://images.pexels.com/photos/148
     # 2. Render Image
     print("\n2. Generating 9:16 Story Graphic...")
     output_path = os.path.join(os.path.dirname(__file__), "..", "output", "morning_story.jpg")
-    success = create_news_story_image(story_data['headline'], story_data['summary'], output_path)
+    success = create_news_story_image(
+        story_data['headline'], 
+        story_data['summary'], 
+        output_path,
+        link=story_data.get('link')
+    )
     
     if not success:
         print("[EXIT] Failed to render story image. Aborting.")

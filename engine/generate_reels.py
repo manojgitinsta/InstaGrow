@@ -26,6 +26,7 @@ import traceback
 import time
 import uuid
 import re
+import random
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
@@ -121,25 +122,54 @@ def create_film_grain_frame(w, h, intensity=25):
     return np.stack([grey, grey, grey, alpha], axis=-1)
 
 
-def apply_ken_burns_zoom(clip, zoom_start=1.0, zoom_end=1.15):
-    """Apply a slow Ken Burns zoom-in effect."""
+def apply_ken_burns_zoom(clip, zoom_start=1.0, zoom_end=1.15, style=None):
+    """
+    Apply a Ken Burns effect. Style can be:
+      'zoom_in'  — classic slow zoom in
+      'zoom_out' — starts zoomed, pulls back
+      'pan_left' — slow pan from right to left
+      'pan_right'— slow pan from left to right
+    If style is None, a random style is chosen.
+    """
+    if style is None:
+        style = random.choice(['zoom_in', 'zoom_out', 'pan_left', 'pan_right'])
+    print(f"   \U0001f3ac Ken Burns style: {style}")
+
     duration = clip.duration
     w, h = clip.size
 
     def zoom_effect(get_frame, t):
         progress = t / duration
-        scale = zoom_start + (zoom_end - zoom_start) * progress
         frame = get_frame(t)
 
-        # Calculate crop dimensions
+        if style == 'zoom_in':
+            scale = zoom_start + (zoom_end - zoom_start) * progress
+        elif style == 'zoom_out':
+            scale = zoom_end - (zoom_end - zoom_start) * progress
+        else:
+            scale = (zoom_start + zoom_end) / 2  # constant mild zoom for pans
+
         new_w = int(w / scale)
         new_h = int(h / scale)
-        x_offset = (w - new_w) // 2
-        y_offset = (h - new_h) // 2
+
+        if style == 'pan_left':
+            max_shift = w - new_w
+            x_offset = int(max_shift * (1 - progress))
+            y_offset = (h - new_h) // 2
+        elif style == 'pan_right':
+            max_shift = w - new_w
+            x_offset = int(max_shift * progress)
+            y_offset = (h - new_h) // 2
+        else:
+            x_offset = (w - new_w) // 2
+            y_offset = (h - new_h) // 2
+
+        # Clamp to prevent out-of-bounds
+        x_offset = max(0, min(x_offset, w - new_w))
+        y_offset = max(0, min(y_offset, h - new_h))
 
         cropped = frame[y_offset:y_offset + new_h, x_offset:x_offset + new_w]
 
-        # Resize back to original dimensions
         from PIL import Image as PILImage
         img = PILImage.fromarray(cropped)
         img = img.resize((w, h), PILImage.LANCZOS)
@@ -148,27 +178,41 @@ def apply_ken_burns_zoom(clip, zoom_start=1.0, zoom_end=1.15):
     return clip.transform(zoom_effect)
 
 
-def apply_cinematic_grade(clip):
-    """Apply dark cinematic color grading: desaturation + contrast + warm shadows."""
+# Color grading presets for visual variety
+GRADING_PRESETS = {
+    'warm_amber': {'sat': 0.65, 'contrast': 1.25, 'r': 10, 'g': 5, 'b': -4, 'dark': 0.86},
+    'cold_blue':  {'sat': 0.60, 'contrast': 1.30, 'r': -3, 'g': 2, 'b': 8, 'dark': 0.84},
+    'noir':       {'sat': 0.40, 'contrast': 1.40, 'r': 3, 'g': 3, 'b': 3, 'dark': 0.80},
+    'golden_hour':{'sat': 0.75, 'contrast': 1.20, 'r': 12, 'g': 8, 'b': -6, 'dark': 0.90},
+}
+
+
+def apply_cinematic_grade(clip, preset=None):
+    """Apply dark cinematic color grading with a random visual preset."""
+    if preset is None:
+        preset = random.choice(list(GRADING_PRESETS.keys()))
+    p = GRADING_PRESETS[preset]
+    print(f"   \U0001f3a8 Color grade: {preset}")
+
     def grade_frame(frame):
         img = frame.astype(np.float32)
 
-        # 1. Desaturate (70% saturation)
+        # 1. Desaturate
         grey = np.mean(img, axis=2, keepdims=True)
-        img = img * 0.7 + grey * 0.3
+        img = img * p['sat'] + grey * (1 - p['sat'])
 
-        # 2. Boost contrast (1.25x around midpoint)
+        # 2. Boost contrast
         midpoint = 128.0
-        img = (img - midpoint) * 1.25 + midpoint
+        img = (img - midpoint) * p['contrast'] + midpoint
 
-        # 3. Warm shadow tint (add subtle amber to dark areas)
+        # 3. Shadow tint
         shadow_mask = np.clip(1.0 - (img / 128.0), 0, 1)
-        img[:, :, 0] += shadow_mask[:, :, 0] * 8   # Red +
-        img[:, :, 1] += shadow_mask[:, :, 1] * 4   # Green +
-        img[:, :, 2] -= shadow_mask[:, :, 2] * 3   # Blue -
+        img[:, :, 0] += shadow_mask[:, :, 0] * p['r']
+        img[:, :, 1] += shadow_mask[:, :, 1] * p['g']
+        img[:, :, 2] += shadow_mask[:, :, 2] * p['b']
 
-        # 4. Slight overall darkening
-        img *= 0.88
+        # 4. Overall darkening
+        img *= p['dark']
 
         return np.clip(img, 0, 255).astype(np.uint8)
 
@@ -279,9 +323,29 @@ def create_watermark_overlay(duration):
     return _create_image_clip(canvas, duration)
 
 
+# Rotating CTA pool — never the same CTA twice in a row
+CTA_POOL = [
+    "Send this to someone who needs it",
+    "Save this for your darkest hour",
+    "Share with someone fighting silently",
+    "Tag someone who understands this",
+    "Save this. Read it again at 3AM.",
+    "Follow for more truths like this",
+    "Double tap if this hit different",
+    "Share this before you forget",
+    "Send this to your strongest friend",
+    "Save this. You'll need it someday.",
+    "Tag someone who never gives up",
+    "Follow if you felt this one",
+    "Share with someone rebuilding",
+    "Save this for when you almost quit",
+    "This one's for the silent warriors",
+]
+
+
 def create_cta_overlay(duration, appear_at):
-    """Create a 'Send this to someone who needs it' CTA that appears in the last few seconds."""
-    cta_text = "Send this to someone who needs it"
+    """Create a CTA overlay from a rotating pool — appears in the last few seconds."""
+    cta_text = random.choice(CTA_POOL)
     canvas = Image.new('RGBA', (REEL_WIDTH, REEL_HEIGHT), (0, 0, 0, 0))
     draw = ImageDraw.Draw(canvas)
 
@@ -385,8 +449,10 @@ def create_cinematic_reel(
     print(f"\n📥 Fetching cinematic background: '{scene_query}'...")
 
     if not fetch_pexels_video(scene_query, bg_path, use_local=False, result_index=video_index):
-        print("[WARN] Primary query failed, trying fallback...")
-        if not fetch_pexels_video("cinematic dark ocean", bg_path, use_local=False, result_index=video_index):
+        print("[WARN] Primary query failed, trying diverse fallback...")
+        fallback_queries = ["cinematic rainy street night", "cinematic foggy mountain", "cinematic lonely sunset", "cinematic dark forest"]
+        fallback_query = random.choice(fallback_queries)
+        if not fetch_pexels_video(fallback_query, bg_path, use_local=False, result_index=video_index):
             print("[ERROR] Could not fetch any background video. Aborting.")
             return None
 
@@ -413,11 +479,11 @@ def create_cinematic_reel(
             bg_clip = bg_clip.with_effects([vfx.Resize(width=REEL_WIDTH)])
             bg_clip = bg_clip.with_effects([vfx.Crop(y_center=bg_clip.size[1] / 2, height=REEL_HEIGHT)])
 
-        # Apply Ken Burns zoom
-        print("   🔍 Applying Ken Burns slow zoom...")
+        # Apply Ken Burns effect (randomized direction)
+        print("   🔍 Applying Ken Burns effect...")
         bg_clip = apply_ken_burns_zoom(bg_clip, zoom_start=1.0, zoom_end=1.18)
 
-        # Apply cinematic color grading
+        # Apply cinematic color grading (randomized preset)
         print("   🎨 Applying cinematic color grading...")
         bg_clip = apply_cinematic_grade(bg_clip)
 
@@ -429,12 +495,15 @@ def create_cinematic_reel(
     # ── 3. Create Visual Effects Layers ─────────────────────────────────────
     print("\n✨ Building cinematic layers...")
 
-    # Dim overlay for readability (darker to pop text)
-    dim_layer = create_dim_overlay(duration, opacity=170)
+    # Dim overlay — randomize opacity for visual variety
+    dim_opacity = random.randint(140, 190)
+    dim_layer = create_dim_overlay(duration, opacity=dim_opacity)
+    print(f"   🌑 Dim overlay opacity: {dim_opacity}")
 
-    # Heavy vignette
-    print("   🔲 Creating vignette...")
-    vignette_layer = create_vignette_overlay(duration, intensity=1.2)
+    # Vignette — randomize intensity
+    vig_intensity = round(random.uniform(1.0, 1.4), 2)
+    print(f"   🔲 Vignette intensity: {vig_intensity}")
+    vignette_layer = create_vignette_overlay(duration, intensity=vig_intensity)
 
     # ── 4. Create Text Layers ───────────────────────────────────────────────
     print("\n✍️  Rendering typography...")

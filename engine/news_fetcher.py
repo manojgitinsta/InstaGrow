@@ -32,12 +32,17 @@ def fetch_positive_news_raw():
                     title = item.find('title').text if item.find('title') is not None else ""
                     # Often descriptions contain HTML, we just want the raw text or the first snippet
                     desc = item.find('description').text if item.find('description') is not None else ""
+                    link = item.find('link').text if item.find('link') is not None else ""
                     # Clean up basic HTML tags
                     import re
                     desc_clean = re.sub('<[^<]+>', '', desc).strip()
                     
                     if title:
-                        all_items.append({"title": title, "description": desc_clean[:300]}) # Keep descriptions short
+                        all_items.append({
+                            "title": title, 
+                            "description": desc_clean[:300],
+                            "link": link
+                        }) # Keep descriptions short
             else:
                 print(f"[RSS] Failed to fetch {feed_url} (Status: {response.status_code})")
         except Exception as e:
@@ -61,10 +66,12 @@ def curate_and_rewrite_news(raw_news_items):
         try:
             safe_title = item['title'].encode('ascii', 'ignore').decode('ascii')
             safe_desc = item['description'].encode('ascii', 'ignore').decode('ascii')
+            safe_link = item['link']
         except:
              safe_title = "Title Error"
              safe_desc = "Desc Error"
-        news_textblock += f"[{i+1}] TITLE: {safe_title}\nSUMMARY: {safe_desc}\n\n"
+             safe_link = "No Link"
+        news_textblock += f"[{i+1}] TITLE: {safe_title}\nSUMMARY: {safe_desc}\nLINK: {safe_link}\n\n"
 
     prompt = f"""You are determining the "Positive News of the Day" for the Instagram account @_the_positive_quote. 
 The brand aesthetic is soothing, healing, positive, and deeply motivational. It focuses on spreading truth, resilience, and belief in humanity.
@@ -77,11 +84,12 @@ TASK:
 2. Rewrite it into a short, highly engaging format specifically designed for a vertical Instagram Story image.
 
 FORMAT REQUIREMENTS:
-Return exactly TWO lines. Keep it in very simple English.
+Return exactly THREE lines. Keep it in very simple English.
 Line 1: The bold, punchy Headline (Keep it under 10 words. No quotes. UPPERCASE).
 Line 2: A short, simple summary answering "What happened and where?" followed by a brief, deeply motivational takeaway. (Keep it under 35 words total).
+Line 3: The exact URL (LINK) of the selected story.
 
-DO NOT output anything else. No introductory text. Just Line 1 and Line 2. 
+DO NOT output anything else. No introductory text. Just Line 1, Line 2, and Line 3. 
 """
 
     print("[AI] Curating the best positive news story via Gemini...")
@@ -92,17 +100,20 @@ DO NOT output anything else. No introductory text. Just Line 1 and Line 2.
         # Filter out empty lines
         lines = [l.strip() for l in lines if l.strip()]
         
-        if len(lines) >= 2:
+        if len(lines) >= 3:
             headline = lines[0]
-            summary = " ".join(lines[1:]) # Just in case it split into more lines
+            summary = lines[1]
+            link = lines[2]
             
             # Clean formatting if AI added bold markers
             headline = headline.replace("**", "")
             summary = summary.replace("**", "")
+            link = link.replace("**", "").strip()
             
             return {
                 "headline": headline,
-                "summary": summary
+                "summary": summary,
+                "link": link
             }
         else:
              print("[AI_ERROR] Gemini returned unexpected format:")
@@ -127,8 +138,10 @@ if __name__ == "__main__":
         try:
              print(f"HEADLINE: {story['headline']}")
              print(f"SUMMARY: {story['summary']}")
+             print(f"LINK:     {story.get('link')}")
         except UnicodeEncodeError:
              print(f"HEADLINE: {story['headline'].encode('ascii', 'ignore').decode('ascii')}")
              print(f"SUMMARY: {story['summary'].encode('ascii', 'ignore').decode('ascii')}")
+             print(f"LINK:     {story.get('link')}")
     else:
         print("Failed to fetch or curate news.")
