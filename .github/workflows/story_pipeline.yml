@@ -1,9 +1,10 @@
 name: Morning Story Pipeline
 
 on:
-  schedule:
-    # 9:00 AM IST is 3:30 AM UTC
-    - cron: '30 3 * * *'
+  # ⏸️ PAUSED — Daily posting disabled. Uncomment schedule to resume.
+  # schedule:
+  #   # 9:00 AM IST is 3:30 AM UTC
+  #   - cron: '30 3 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 jobs:
