@@ -75,7 +75,7 @@ def run_story_agent(dry_run=True, mock_url="https://images.pexels.com/photos/148
     print("=" * 60)
 
     # 1. Fetch & Curate News
-    print("\n1. Sourcing Positive News...")
+    print("\n1. Sourcing Latest Indian News...")
     story_data = get_todays_news_story()
     if not story_data:
         print("[EXIT] Could not fetch news. Aborting.")

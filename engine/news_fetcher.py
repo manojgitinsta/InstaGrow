@@ -8,12 +8,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from engine.gemini_keys import generate_with_rotation
 
 RSS_FEEDS = [
-    "https://www.goodnewsnetwork.org/feed/",
-    "https://optimistdaily.com/feed/"
+    "https://feeds.feedburner.com/ndtvnews-india-news",
+    "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms",
+    "https://www.thehindu.com/news/national/feeder/default.rss",
 ]
 
 def fetch_positive_news_raw():
-    """Fetches recent news items from positive RSS feeds."""
+    """Fetches recent Indian news items from national RSS feeds."""
     all_items = []
     
     # Simple anti-user-agent blocking setup
@@ -56,7 +57,7 @@ def fetch_positive_news_raw():
     return []
 
 def curate_and_rewrite_news(raw_news_items):
-    """Uses Gemini to select the most impactful story and rewrite it for an IG Story."""
+    """Uses Gemini to select the most controversial Indian story and rewrite it as constructive criticism."""
     if not raw_news_items:
         print("[AI] No news items provided to curate.")
         return None
@@ -73,23 +74,37 @@ def curate_and_rewrite_news(raw_news_items):
              safe_link = "No Link"
         news_textblock += f"[{i+1}] TITLE: {safe_title}\nSUMMARY: {safe_desc}\nLINK: {safe_link}\n\n"
 
-    prompt = f"""You are determining the "Positive News of the Day" for the Instagram account @_the_positive_quote. 
-The brand aesthetic is soothing, healing, positive, and deeply motivational. It focuses on spreading truth, resilience, and belief in humanity.
+    prompt = f"""You are a sharp, bold Indian voice for the Instagram account @_the_positive_quote.
+Your job is to highlight what's WRONG in India today — and challenge the government and system CONSTRUCTIVELY.
 
-Here are {len(raw_news_items)} recent positive news headlines:
+PRIORITY TOPICS (pick stories related to these if available):
+- Road corruption, pothole deaths, crumbling infrastructure
+- Bridge collapse, building collapse, civic negligence
+- Government corruption, scams, misuse of public funds
+- Hate speech by politicians, communal divide
+- E20 Petrol impact, fuel price burden on common people
+- Student protests, youth unemployment
+- Exam paper leaks (NEET, SSC, etc.)
+- Judiciary delays, mockery of justice
+- Capitalism crushing the middle class, corporate favoritism
+- Farmer distress, MSP issues
+- Environmental neglect, pollution crisis
+
+Here are {len(raw_news_items)} recent Indian news headlines:
 {news_textblock}
 
 TASK:
-1. Select the SINGLE most impactful, uplifting, and society-affirming story from the list above.
-2. Rewrite it into a short, highly engaging format specifically designed for a vertical Instagram Story image.
+1. Select the SINGLE most controversial, system-challenging, policy-relevant story from the list above.
+2. Rewrite it as CONSTRUCTIVE CRITICISM — acknowledge the real problem, call out the policy failure, and end with a strong citizen call-to-action.
+3. The tone should be bold and fearless but NOT hateful. Think of it as a responsible citizen demanding accountability.
 
 FORMAT REQUIREMENTS:
-Return exactly THREE lines. Keep it in very simple English.
-Line 1: The bold, punchy Headline (Keep it under 10 words. No quotes. UPPERCASE).
-Line 2: A short, simple summary answering "What happened and where?" followed by a brief, deeply motivational takeaway. (Keep it under 35 words total).
+Return exactly THREE lines. Keep it in very simple English that common Indians understand.
+Line 1: A bold, angry but constructive Headline (Keep it under 10 words. No quotes. UPPERCASE. Make it catchy and shareable.)
+Line 2: A short summary of what went wrong, who is responsible, and what citizens should demand. (Keep it under 40 words total.)
 Line 3: The exact URL (LINK) of the selected story.
 
-DO NOT output anything else. No introductory text. Just Line 1, Line 2, and Line 3. 
+DO NOT output anything else. No introductory text. Just Line 1, Line 2, and Line 3.
 """
 
     print("[AI] Curating the best positive news story via Gemini...")

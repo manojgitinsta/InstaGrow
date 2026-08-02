@@ -17,12 +17,19 @@ STORY_WIDTH = 1080
 STORY_HEIGHT = 1920
 
 def get_soothing_background():
-    """Fetches a vertical 'soothing/light' image from Pexels."""
+    """Fetches a vertical dramatic background image from Pexels."""
     if not PEXELS_API_KEY:
         print("[ERROR] Pexels API key missing.")
         return None
-        
-    queries = ["morning sun", "calm ocean", "soft clouds", "healing nature", "gentle light", "sunrise mist"]
+
+    queries = [
+        "broken road pothole", "construction collapse", "city protest crowd",
+        "indian parliament building", "courtroom gavel justice", "fuel petrol pump",
+        "student protest rally", "newspaper headlines", "city pollution smog",
+        "cracked wall decay", "crowd rally india", "dark city street night",
+        "government building dramatic", "urban poverty india", "traffic chaos city",
+        "money corruption concept", "angry crowd signs", "india gate dramatic sky",
+    ]
     query = random.choice(queries)
     
     url = f"https://api.pexels.com/v1/search?query={query}&orientation=portrait&size=large&per_page=15"
@@ -143,10 +150,11 @@ def create_news_story_image(headline, summary, output_path, link=None):
         ImageDraw.Draw(canvas).text(xy, text, font=font, fill=fill)
         return canvas
 
-    # 4. Draw "POSITIVE NEWS OF THE DAY" Label
-    label_text = "POSITIVE NEWS OF THE DAY"
+    # 4. Draw "INDIA TODAY" Label
+    label_text = "INDIA TODAY"
     label_w = draw.textlength(label_text, font=font_label)
-    img = draw_text_with_glow(img, ((STORY_WIDTH - label_w) / 2, current_y), label_text, font=font_label, fill=(255, 204, 0, 255), glow_fill=(255, 204, 0, 80))
+    # Indian saffron color for bold, patriotic feel
+    img = draw_text_with_glow(img, ((STORY_WIDTH - label_w) / 2, current_y), label_text, font=font_label, fill=(255, 103, 31, 255), glow_fill=(255, 103, 31, 100))
     current_y += 180
 
     # 5. Draw Headline
