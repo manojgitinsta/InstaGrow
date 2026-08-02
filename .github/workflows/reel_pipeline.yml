@@ -1,10 +1,9 @@
 name: Nighttime Reel Pipeline
 
 on:
-  # ⏸️ PAUSED — Daily posting disabled. Uncomment schedule to resume.
-  # schedule:
-  #   # 10:00 PM IST is 4:30 PM UTC
-  #   - cron: '30 16 * * *'
+  schedule:
+    # 10:00 PM IST is 4:30 PM UTC
+    - cron: '30 16 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 jobs:
